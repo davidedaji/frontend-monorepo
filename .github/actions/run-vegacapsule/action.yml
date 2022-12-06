@@ -17,10 +17,6 @@ runs:
       shell: bash
       working-directory: capsule
 
-    - name: Login to docker
-      shell: bash
-      run: echo -n ${{ inputs.github-token }} | docker login https://ghcr.io -u vega-ci-bot --password-stdin
-
     - name: Start nomad
       shell: bash
       run: vegacapsule nomad &
