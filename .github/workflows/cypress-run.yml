@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         project: ${{ fromJSON(inputs.projects) }}
-    runs-on: self-hosted-runner
+    runs-on: test-hosted-runner
     timeout-minutes: 30
     steps:
       # Checks if skip cache was requested
