@@ -27,7 +27,7 @@ const isWithdrawTransaction = (tx: EthStoredTxState) =>
   tx.methodName === 'withdraw_asset';
 
 const isDepositTransaction = (tx: EthStoredTxState) =>
-  tx.methodName === 'withdraw_asset';
+  tx.methodName === 'deposit_asset';
 
 const EthTransactionDetails = ({ tx }: { tx: EthStoredTxState }) => {
   const { data: assets } = useAssetsDataProvider();
@@ -96,7 +96,7 @@ const EthTxPendingToastContent = ({ tx }: EthTxToastContentProps) => {
   return (
     <div>
       <h3 className="font-bold">{t('Awaiting confirmation')}</h3>
-      <p>{t('Please wait for your transaction to be confirmed')}</p>
+      <p>{t('Please wait for your transaction to be confirmed.')}</p>
       <EtherscanLink tx={tx} />
       <EthTransactionDetails tx={tx} />
     </div>
@@ -138,7 +138,7 @@ const EthTxConfirmedToastContent = ({ tx }: EthTxToastContentProps) => {
   return (
     <div>
       <h3 className="font-bold">{t('Transaction confirmed')}</h3>
-      <p>{t('Your transaction has been confirmed')}</p>
+      <p>{t('Your transaction has been confirmed.')}</p>
       <EtherscanLink tx={tx} />
       <EthTransactionDetails tx={tx} />
     </div>
@@ -150,11 +150,11 @@ const EthTxCompletedToastContent = ({ tx }: EthTxToastContentProps) => {
   return (
     <div>
       <h3 className="font-bold">
-        {t('Processing')} {isDeposit && 'deposit'}
+        {t('Processing')} {isDeposit && t('deposit')}
       </h3>
       <p>
-        {t('Your transaction has been completed.')}
-        {isDeposit && t('Waiting for deposit confirmation')}
+        {t('Your transaction has been completed.')}{' '}
+        {isDeposit && t('Waiting for deposit confirmation.')}
       </p>
       <EtherscanLink tx={tx} />
       <EthTransactionDetails tx={tx} />
