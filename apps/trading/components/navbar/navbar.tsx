@@ -185,7 +185,7 @@ interface AppNavLinkProps {
   onClick?: () => void;
 }
 
-const AppNavLink = ({
+export const AppNavLink = ({
   name,
   path,
   navbarTheme,

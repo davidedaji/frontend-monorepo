@@ -1,6 +1,13 @@
 import Head from 'next/head';
 import type { AppProps } from 'next/app';
-import { Navbar } from '../components/navbar';
+import {
+  Navbar,
+  NavigationContent,
+  NavigationItem,
+  NavigationLink,
+  NavigationList,
+  NavigationTrigger,
+} from '../components/navbar';
 import { t } from '@vegaprotocol/react-helpers';
 import {
   useEagerConnect as useVegaEagerConnect,
@@ -28,12 +35,19 @@ import { Footer } from '../components/footer';
 import { useMemo, useState } from 'react';
 import DialogsContainer from './dialogs-container';
 import ToastsManager from './toasts-manager';
-import { HashRouter, useLocation, useSearchParams } from 'react-router-dom';
+import {
+  HashRouter,
+  Link,
+  NavLink,
+  useLocation,
+  useSearchParams,
+} from 'react-router-dom';
 import { Connectors } from '../lib/vega-connectors';
 import { ViewingBanner } from '../components/viewing-banner';
 import { Banner } from '../components/banner';
 import classNames from 'classnames';
 import { AppLoader } from '../components/app-loader';
+import { Links, Routes } from './client-router';
 
 const DEFAULT_TITLE = t('Welcome to Vega trading!');
 
@@ -68,6 +82,12 @@ const TransactionsHandler = () => {
 };
 
 function AppBody({ Component }: AppProps) {
+  const { marketId } = useGlobalStore((store) => ({
+    marketId: store.marketId,
+  }));
+  const tradingPath = marketId
+    ? Links[Routes.MARKET](marketId)
+    : Links[Routes.MARKET]();
   const location = useLocation();
   const { VEGA_ENV } = useEnvironment();
 
@@ -84,10 +104,66 @@ function AppBody({ Component }: AppProps) {
       </Head>
       <Title />
       <div className={gridClasses}>
-        <Navbar
-          navbarTheme={VEGA_ENV === Networks.TESTNET ? 'yellow' : 'dark'}
-        />
         <Banner />
+        <Navbar
+        // navbarTheme={VEGA_ENV === Networks.TESTNET ? 'yellow' : 'dark'}
+        >
+          <NavigationList>
+            <NavigationItem>
+              <NavigationLink path={Links[Routes.MARKETS]()}>
+                Markets
+              </NavigationLink>
+            </NavigationItem>
+
+            <NavigationItem>
+              <NavigationLink path={tradingPath}>Trading</NavigationLink>
+            </NavigationItem>
+
+            <NavigationItem>
+              <NavigationLink path={Links[Routes.PORTFOLIO]()}>
+                Portfolio
+              </NavigationLink>
+            </NavigationItem>
+
+            <NavigationItem>
+              <NavigationTrigger>Dropdown</NavigationTrigger>
+              <NavigationContent backText="Token">
+                <NavigationItem>
+                  <NavigationLink path={tradingPath}>Trading</NavigationLink>
+                </NavigationItem>
+
+                <NavigationItem>
+                  <NavigationLink path={Links[Routes.PORTFOLIO]()}>
+                    Portfolio
+                  </NavigationLink>
+                </NavigationItem>
+
+                <NavigationItem>
+                  <NavigationLink path="https://google.com">
+                    Redeem Vested Tokens
+                  </NavigationLink>
+                </NavigationItem>
+              </NavigationContent>
+            </NavigationItem>
+
+            <NavigationItem>
+              <NavigationTrigger>Another</NavigationTrigger>
+              <NavigationContent backText="Another">
+                <NavigationItem>
+                  <NavigationLink path="https://google.com">Foo</NavigationLink>
+                </NavigationItem>
+
+                <NavigationItem>
+                  <NavigationLink path="https://google.com">Bar</NavigationLink>
+                </NavigationItem>
+
+                <NavigationItem>
+                  <NavigationLink path="https://google.com">Quz</NavigationLink>
+                </NavigationItem>
+              </NavigationContent>
+            </NavigationItem>
+          </NavigationList>
+        </Navbar>
         <ViewingBanner />
         <main data-testid={location.pathname}>
           <Component />
