@@ -35,7 +35,7 @@ export const TOP_LEVEL_ROUTES = [
 
 export const TOKEN_DROPDOWN_ROUTES = [
   {
-    name: 'Token',
+    name: 'Information',
     path: Routes.TOKEN,
   },
   {

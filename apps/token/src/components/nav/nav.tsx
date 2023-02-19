@@ -1,13 +1,21 @@
 import { Link } from 'react-router-dom';
 import { NetworkSwitcher } from '@vegaprotocol/environment';
 import { useEffect, useState } from 'react';
-import { TOP_LEVEL_ROUTES } from '../../routes/routes';
+import { TOP_LEVEL_ROUTES, TOKEN_DROPDOWN_ROUTES } from '../../routes/routes';
 import { useTranslation } from 'react-i18next';
 import logoWhiteText from '../../images/logo-white-text.png';
 import logoBlackText from '../../images/logo-black-text.png';
 import debounce from 'lodash/debounce';
 import { NavDrawer } from './nav-draw';
-import { Nav as ToolkitNav } from '@vegaprotocol/ui-toolkit';
+import {
+  Nav as ToolkitNav,
+  Navbar,
+  NavigationContent,
+  NavigationItem,
+  NavigationLink,
+  NavigationList,
+  NavigationTrigger,
+} from '@vegaprotocol/ui-toolkit';
 import { AppNavLink } from './nav-link';
 import { NavDropDown } from './nav-dropdown';
 
@@ -41,7 +49,28 @@ export const Nav = ({ navbarTheme = 'inherit' }: NavbarProps) => {
 
   const { t } = useTranslation();
   const isYellow = navbarTheme === 'yellow';
-
+  return (
+    <Navbar>
+      <NavigationList>
+        {TOP_LEVEL_ROUTES.map((r) => (
+          <NavigationItem key={r.path}>
+            <NavigationLink path={r.path}>{t(r.name)}</NavigationLink>
+          </NavigationItem>
+        ))}
+        <NavigationItem>
+          <NavigationTrigger>{t('Token')}</NavigationTrigger>
+          <NavigationContent backText={t('Token')}>
+            {TOKEN_DROPDOWN_ROUTES.map((r) => (
+              <NavigationItem>
+                <NavigationLink path={r.path}>{r.name}</NavigationLink>
+              </NavigationItem>
+            ))}
+          </NavigationContent>
+        </NavigationItem>
+      </NavigationList>
+    </Navbar>
+  );
+  /*
   return (
     <ToolkitNav
       navbarTheme={navbarTheme}
@@ -78,4 +107,5 @@ export const Nav = ({ navbarTheme = 'inherit' }: NavbarProps) => {
       )}
     </ToolkitNav>
   );
+  */
 };
