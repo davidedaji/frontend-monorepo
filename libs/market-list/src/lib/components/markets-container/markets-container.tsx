@@ -6,7 +6,7 @@ import type { RowClickedEvent } from 'ag-grid-community';
 import { marketsWithDataProvider as dataProvider } from '../../markets-provider';
 import type { MarketMaybeWithData } from '../../markets-provider';
 interface MarketsContainerProps {
-  onSelect: (marketId: string) => void;
+  onSelect: (marketId: string, isMetaPressed: boolean) => void;
 }
 
 export const MarketsContainer = ({ onSelect }: MarketsContainerProps) => {
@@ -29,7 +29,7 @@ export const MarketsContainer = ({ onSelect }: MarketsContainerProps) => {
           ) {
             return;
           }
-          onSelect((data as MarketMaybeWithData).id);
+          onSelect((data as MarketMaybeWithData).id, event.metaKey);
         }}
       />
       <div className="pointer-events-none absolute inset-0">

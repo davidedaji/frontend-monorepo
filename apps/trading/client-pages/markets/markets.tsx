@@ -6,8 +6,12 @@ import { Links, Routes } from '../../pages/client-router';
 export const Markets = () => {
   const navigate = useNavigate();
   const handleOnSelect = useCallback(
-    (marketId: string) => {
-      navigate(Links[Routes.MARKET](marketId));
+    (marketId: string, isMetaPressed: boolean) => {
+      if (isMetaPressed) {
+        window.open(`/#/markets/${marketId}`, '_blank');
+      } else {
+        navigate(Links[Routes.MARKET](marketId));
+      }
     },
     [navigate]
   );
