@@ -34,6 +34,10 @@ html [data-theme='dark'] {
   /* sell candles only use stroke as the candle is solid (without border) */
   --pennant-color-sell-stroke: theme('colors.vega.pink.500');
 
+  /* colors for chart volume bars */
+  --pennant-color-volume-buy: theme('colors.vega.green.650');
+  --pennant-color-volume-sell: theme('colors.vega.pink.500');
+
   /* depth chart */
   --pennant-color-depth-buy-fill: theme('colors.vega.green.650');
   --pennant-color-depth-buy-stroke: theme('colors.vega.green.500');
@@ -49,6 +53,10 @@ html [data-theme='light'] {
   --pennant-color-buy-stroke: theme('colors.vega.green.550');
   /* sell candles only use stroke as the candle is solid (without border) */
   --pennant-color-sell-stroke: theme('colors.vega.pink.400');
+
+  /* colors for chart volume bars */
+  --pennant-color-volume-buy: theme('colors.vega.green.400');
+  --pennant-color-volume-sell: theme('colors.vega.pink.400');
 
   /* depth chart */
   --pennant-color-depth-buy-fill: theme('colors.vega.green.400');
