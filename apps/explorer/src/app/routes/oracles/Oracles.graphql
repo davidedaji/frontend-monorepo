@@ -34,6 +34,7 @@ fragment ExplorerOracleDataSource on OracleSpec {
                   key {
                     name
                     type
+                    numberDecimalPlaces
                   }
                   conditions {
                     value
