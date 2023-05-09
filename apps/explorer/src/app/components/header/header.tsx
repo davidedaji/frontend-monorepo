@@ -65,7 +65,7 @@ export const Header = () => {
   return (
     <Navigation
       appName="Explorer"
-      theme="system"
+      theme="dark"
       breakpoints={[490, 900]}
       actions={
         <>
