@@ -20,6 +20,7 @@ export const SettlementDateCell = ({
 }: SettlementDataCellProps) => {
   const linkCreator = useLinks(DApp.Explorer);
   const date = closeTimestamp ? new Date(closeTimestamp) : metaDate;
+  console.log(metaDate);
 
   let text = '';
   if (!date) {

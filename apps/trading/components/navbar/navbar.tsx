@@ -46,7 +46,7 @@ export const Navbar = ({
   return (
     <Navigation
       appName="Console"
-      theme={theme}
+      theme={'dark'}
       actions={
         <>
           <ProtocolUpgradeCountdown

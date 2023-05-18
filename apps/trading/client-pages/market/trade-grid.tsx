@@ -32,6 +32,7 @@ import {
 import { TradingViews } from './trade-views';
 import { MarketSelector } from './market-selector';
 import { HeaderStats } from './header-stats';
+import { PositionsMultiKey } from '@vegaprotocol/positions';
 
 interface TradeGridProps {
   market: Market | null;
@@ -130,6 +131,11 @@ const MarketBottomPanel = memo(
         >
           <TradeGridChild>
             <Tabs storageKey="console-trade-grid-bottom-right">
+              <Tab id="positions-multi" name={t('Positions v2')}>
+                <VegaWalletContainer>
+                  <PositionsMultiKey />
+                </VegaWalletContainer>
+              </Tab>
               <Tab id="positions" name={t('Positions')}>
                 <VegaWalletContainer>
                   <TradingViews.positions.component

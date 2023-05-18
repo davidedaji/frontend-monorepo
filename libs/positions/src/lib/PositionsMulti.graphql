@@ -1,0 +1,25 @@
+fragment PositionMultiFields on Position {
+  realisedPNL
+  openVolume
+  unrealisedPNL
+  averageEntryPrice
+  updatedAt
+  positionStatus
+  lossSocializationAmount
+  market {
+    id
+  }
+  party {
+    id
+  }
+}
+
+query PositionsMulti($partyIds: [ID!]!) {
+  positions(filter: { partyIds: $partyIds }) {
+    edges {
+      node {
+        ...PositionMultiFields
+      }
+    }
+  }
+}
