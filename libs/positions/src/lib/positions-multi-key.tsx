@@ -93,6 +93,9 @@ const usePositions = () => {
           variables: {
             partyId: p.publicKey,
           },
+          // no cache as we only want to store data in the root Position query,
+          // we modify this cache entry directly below
+          fetchPolicy: 'no-cache',
         })
         .subscribe(({ data }) => {
           data?.positions.forEach((position) => {
@@ -132,6 +135,9 @@ const MarketCell = ({ id }: { id: string }) => {
     variables: {
       marketId: id,
     },
+    // We should cache all static market data higher up the render tree so this
+    // can be cache only
+    fetchPolicy: 'cache-only',
   });
   if (!data?.market) return <span>-</span>;
   return <span>{data.market.tradableInstrument.instrument.code}</span>;
@@ -142,6 +148,9 @@ const PNLCell = ({ marketId, value }: { marketId: string; value: string }) => {
     variables: {
       marketId,
     },
+    // We should cache all static market data higher up the render tree so this
+    // can be cache only
+    // fetchPolicy: 'cache-only'
   });
   if (!data?.market) return <span>-</span>;
   return (
