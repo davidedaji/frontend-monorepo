@@ -137,7 +137,7 @@ const MarketCell = ({ id }: { id: string }) => {
     },
     // We should cache all static market data higher up the render tree so this
     // can be cache only
-    fetchPolicy: 'cache-only',
+    // fetchPolicy: 'cache-only',
   });
   if (!data?.market) return <span>-</span>;
   return <span>{data.market.tradableInstrument.instrument.code}</span>;
