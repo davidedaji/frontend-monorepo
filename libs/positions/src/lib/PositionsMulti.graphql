@@ -23,3 +23,21 @@ query PositionsMulti($partyIds: [ID!]!) {
     }
   }
 }
+
+query MarketName($marketId: ID!) {
+  market(id: $marketId) {
+    id
+    tradableInstrument {
+      instrument {
+        code
+      }
+    }
+  }
+}
+
+query MarketDecimals($marketId: ID!) {
+  market(id: $marketId) {
+    id
+    decimalPlaces
+  }
+}

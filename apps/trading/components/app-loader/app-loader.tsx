@@ -92,5 +92,8 @@ const cacheConfig: InMemoryCacheConfig = {
     Fees: {
       keyFields: false,
     },
+    Position: {
+      keyFields: ['market', ['id'], 'party', ['id']],
+    },
   },
 };
