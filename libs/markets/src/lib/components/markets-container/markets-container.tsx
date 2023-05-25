@@ -6,7 +6,8 @@ import { AsyncRenderer } from '@vegaprotocol/ui-toolkit';
 import { MarketListTable } from './market-list-table';
 import { useDataProvider } from '@vegaprotocol/data-provider';
 import type { CellClickedEvent } from 'ag-grid-community';
-import { marketsWithDataProvider as dataProvider } from '../../markets-provider';
+import { marketsWithDataProvider } from '../../markets-provider';
+import { marketsDataProvider } from '../../markets-data-provider';
 import type { MarketMaybeWithData } from '../../markets-provider';
 
 interface MarketsContainerProps {
@@ -17,8 +18,11 @@ export const MarketsContainer = ({ onSelect }: MarketsContainerProps) => {
   const gridRef = useRef<AgGridReact | null>(null);
   const [dataCount, setDataCount] = useState(0);
   const { data, error, loading, reload } = useDataProvider({
-    dataProvider,
-    skipUpdates: true,
+    dataProvider: marketsWithDataProvider,
+    variables: undefined,
+  });
+  const { reload: reloadMarketData } = useDataProvider({
+    dataProvider: marketsDataProvider,
     variables: undefined,
   });
   useEffect(() => {
@@ -27,6 +31,10 @@ export const MarketsContainer = ({ onSelect }: MarketsContainerProps) => {
   const onFilterChanged = useCallback(() => {
     setDataCount(gridRef.current?.api?.getModel().getRowCount() ?? 0);
   }, []);
+  useEffect(() => {
+    const interval = setInterval(reloadMarketData, 1000);
+    return () => clearInterval(interval);
+  }, [reloadMarketData]);
   return (
     <div className="h-full relative">
       <MarketListTable
