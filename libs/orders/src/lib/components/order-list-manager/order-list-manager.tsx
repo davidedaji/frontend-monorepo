@@ -1,6 +1,6 @@
 import compact from 'lodash/compact';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AgGridReact } from 'ag-grid-react';
+import type { AgGridReact } from 'ag-grid-react';
 import type { MarketFieldsFragment } from '@vegaprotocol/markets';
 import { useMarketsQuery } from '@vegaprotocol/markets';
 import { useAssetsQuery } from '@vegaprotocol/assets';
@@ -10,6 +10,8 @@ import { useOrdersUpdateSubscription } from '../order-data-provider';
 import type { ArrayElement } from 'type-fest/source/internal';
 import { OrderStatus } from '@vegaprotocol/types';
 import { orderBy, uniqBy } from 'lodash';
+import type { ColDef, GridApi } from 'ag-grid-community';
+import { getDateTimeFormat } from '@vegaprotocol/utils';
 
 export enum Filter {
   'Open',
@@ -113,11 +115,72 @@ const isOrderActive = (o: { status: OrderStatus }) => {
 };
 
 export const OrderListManager = ({ partyId }: OrderListManagerProps) => {
+  const loadRef = useRef(true);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const { markets } = useMarkets();
   const { assets } = useAssets();
+  // Example using react state
+  //
+  // Pass orders as rowData, because we use getRowId the grid should update 'naturally'
   const { orders } = useOrders(partyId);
 
-  const coldefs = useMemo(() => {
+  // Example with gridApi.applyTransaction
+  //
+  // in this example the entire order state is in the grid as we
+  // dont cache in apollo and we discard the data once applied to the grid
+
+  // useOrdersUpdateSubscription({
+  //   variables: {
+  //     partyId: partyId || '',
+  //   },
+  //   skip: !gridApi || !partyId,
+  //   fetchPolicy: 'no-cache', // dont cache as we are caching here in the hook
+  //   onData: ({ data }) => {
+  //     console.log(gridApi);
+  //     if (!gridApi) {
+  //       throw new Error('Grid not ready');
+  //     }
+
+  //     const incoming = data.data?.orders || [];
+
+  //     if (loadRef.current) {
+  //       loadRef.current = false;
+  //       gridApi.applyTransaction({
+  //         add: incoming,
+  //       });
+  //       return;
+  //     }
+
+  //     if (!incoming.length) return;
+
+  //     const add: Order[] = [];
+  //     const remove: Order[] = [];
+  //     const update: Order[] = [];
+
+  //     incoming.forEach((o) => {
+  //       const exists = gridApi.getRowNode(o.id);
+  //       if (exists) {
+  //         if (isOrderActive(o)) {
+  //           update.push(o);
+  //         } else {
+  //           remove.push(o);
+  //         }
+  //       } else {
+  //         if (isOrderActive(o)) {
+  //           add.push(o);
+  //         }
+  //       }
+  //     });
+
+  //     gridApi.applyTransaction({
+  //       add,
+  //       remove,
+  //       update,
+  //     });
+  //   },
+  // });
+
+  const coldefs = useMemo<ColDef[]>(() => {
     return [
       {
         field: 'marketId',
@@ -138,7 +201,11 @@ export const OrderListManager = ({ partyId }: OrderListManagerProps) => {
         field: 'side',
       },
       {
-        field: 'createdAt',
+        headerName: 'Created',
+        colId: 'createdAt',
+        sort: 'desc', // default sort by latest
+        valueGetter: ({ data }) => new Date(data.createdAt),
+        valueFormatter: ({ value }) => getDateTimeFormat().format(value),
       },
       {
         field: 'updatedAt',
@@ -156,10 +223,15 @@ export const OrderListManager = ({ partyId }: OrderListManagerProps) => {
 
   return (
     <AgGridLazy
+      rowData={orders}
+      onGridReady={(event) => {
+        setGridApi(event.api);
+      }}
       style={{ width: '100%', height: '100%' }}
       columnDefs={coldefs}
-      rowData={orders}
-      getRowId={({ data }) => data.id}
+      getRowId={(params) => {
+        return params.data.id;
+      }}
     />
   );
 };
