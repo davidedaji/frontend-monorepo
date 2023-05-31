@@ -105,12 +105,15 @@ const Web3Container = ({
     useEthWithdrawApprovalsManager();
     return null;
   };
+
   const [connectors, initializeConnectors] = useWeb3ConnectStore((store) => [
     store.connectors,
     store.initialize,
   ]);
+
   const { ETHEREUM_PROVIDER_URL, ETH_LOCAL_PROVIDER_URL, ETH_WALLET_MNEMONIC } =
     useEnvironment();
+
   useEffect(() => {
     if (chainId) {
       return initializeConnectors(
