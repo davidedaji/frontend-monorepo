@@ -7,7 +7,6 @@ import {
   isNumeric,
   truncateByChars,
 } from '@vegaprotocol/utils';
-import { useBottomPlaceholder } from '@vegaprotocol/datagrid';
 import { t } from '@vegaprotocol/i18n';
 import {
   ButtonLink,
