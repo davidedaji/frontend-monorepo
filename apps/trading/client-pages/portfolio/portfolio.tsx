@@ -1,10 +1,9 @@
 import { titlefy } from '@vegaprotocol/utils';
 import { t } from '@vegaprotocol/i18n';
-import { PositionsContainer } from '@vegaprotocol/positions';
-import { OrderListContainer } from '@vegaprotocol/orders';
+import { PositionsContainer } from '../../components/positions-container';
 import { Tab, LocalStoragePersistTabs as Tabs } from '@vegaprotocol/ui-toolkit';
 import { WithdrawalsContainer } from './withdrawals-container';
-import { FillsContainer } from '@vegaprotocol/fills';
+import { FillsContainer } from '../../components/fills-container';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { usePaneLayout } from '@vegaprotocol/react-helpers';
@@ -12,17 +11,15 @@ import { VegaWalletContainer } from '../../components/vega-wallet-container';
 import { DepositsContainer } from './deposits-container';
 import { LayoutPriority } from 'allotment';
 import { usePageTitleStore } from '../../stores';
-import { LedgerContainer } from '@vegaprotocol/ledger';
+import { LedgerContainer } from '../../components/ledger-container';
 import { AccountsContainer } from '../../components/accounts-container';
 import { AccountHistoryContainer } from './account-history-container';
-import {
-  useMarketClickHandler,
-  useMarketLiquidityClickHandler,
-} from '../../lib/hooks/use-market-click-handler';
+import { useMarketClickHandler } from '../../lib/hooks/use-market-click-handler';
 import {
   ResizableGrid,
   ResizableGridPanel,
 } from '../../components/resizable-grid';
+import { OrdersContainer } from '../../components/orders-container';
 
 export const Portfolio = () => {
   const { updateTitle } = usePageTitleStore((store) => ({
@@ -34,7 +31,6 @@ export const Portfolio = () => {
   }, [updateTitle]);
 
   const onMarketClick = useMarketClickHandler(true);
-  const onOrderTypeClick = useMarketLiquidityClickHandler();
   const [sizes, handleOnLayoutChange] = usePaneLayout({ id: 'portfolio' });
   const wrapperClasses = 'h-full max-h-full flex flex-col';
   return (
@@ -50,19 +46,12 @@ export const Portfolio = () => {
               </Tab>
               <Tab id="positions" name={t('Positions')}>
                 <VegaWalletContainer>
-                  <PositionsContainer
-                    onMarketClick={onMarketClick}
-                    noBottomPlaceholder
-                    allKeys
-                  />
+                  <PositionsContainer onMarketClick={onMarketClick} allKeys />
                 </VegaWalletContainer>
               </Tab>
               <Tab id="orders" name={t('Orders')}>
                 <VegaWalletContainer>
-                  <OrderListContainer
-                    onMarketClick={onMarketClick}
-                    onOrderTypeClick={onOrderTypeClick}
-                  />
+                  <OrdersContainer />
                 </VegaWalletContainer>
               </Tab>
               <Tab id="fills" name={t('Fills')}>

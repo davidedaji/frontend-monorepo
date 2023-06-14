@@ -5,21 +5,21 @@ import type { AgGridReact } from 'ag-grid-react';
 import * as Schema from '@vegaprotocol/types';
 import { useVegaTransactionStore } from '@vegaprotocol/wallet';
 import { t } from '@vegaprotocol/i18n';
-import { useBottomPlaceholder } from '@vegaprotocol/datagrid';
+import type { useDataGridStore } from '@vegaprotocol/datagrid';
 import { useVegaWallet } from '@vegaprotocol/wallet';
 
 interface PositionsManagerProps {
   partyIds: string[];
   onMarketClick?: (marketId: string) => void;
   isReadOnly: boolean;
-  noBottomPlaceholder?: boolean;
+  gridProps: ReturnType<typeof useDataGridStore>;
 }
 
 export const PositionsManager = ({
   partyIds,
   onMarketClick,
   isReadOnly,
-  noBottomPlaceholder,
+  gridProps,
 }: PositionsManagerProps) => {
   const { pubKeys, pubKey } = useVegaWallet();
   const gridRef = useRef<AgGridReact | null>(null);
@@ -55,11 +55,6 @@ export const PositionsManager = ({
       },
     });
 
-  const bottomPlaceholderProps = useBottomPlaceholder({
-    gridRef,
-    disabled: noBottomPlaceholder,
-  });
-
   return (
     <div className="h-full relative">
       <PositionsTable
@@ -70,9 +65,9 @@ export const PositionsManager = ({
         onMarketClick={onMarketClick}
         onClose={onClose}
         isReadOnly={isReadOnly}
-        {...bottomPlaceholderProps}
         multipleKeys={partyIds.length > 1}
         overlayNoRowsTemplate={error ? error.message : t('No positions')}
+        {...gridProps}
       />
     </div>
   );
