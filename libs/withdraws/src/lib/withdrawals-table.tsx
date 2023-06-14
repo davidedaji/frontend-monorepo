@@ -55,7 +55,6 @@ export const WithdrawalsTable = (
       }}
       suppressCellFocus
       ref={gridRef}
-      storeKey="withdrawals"
       {...bottomPlaceholderProps}
       {...props}
     >

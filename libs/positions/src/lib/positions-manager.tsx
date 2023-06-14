@@ -13,7 +13,6 @@ interface PositionsManagerProps {
   onMarketClick?: (marketId: string) => void;
   isReadOnly: boolean;
   noBottomPlaceholder?: boolean;
-  storeKey?: string;
 }
 
 export const PositionsManager = ({
@@ -21,7 +20,6 @@ export const PositionsManager = ({
   onMarketClick,
   isReadOnly,
   noBottomPlaceholder,
-  storeKey,
 }: PositionsManagerProps) => {
   const { pubKeys, pubKey } = useVegaWallet();
   const gridRef = useRef<AgGridReact | null>(null);
@@ -73,7 +71,6 @@ export const PositionsManager = ({
         onClose={onClose}
         isReadOnly={isReadOnly}
         {...bottomPlaceholderProps}
-        storeKey={storeKey}
         multipleKeys={partyIds.length > 1}
         overlayNoRowsTemplate={error ? error.message : t('No positions')}
       />
