@@ -5,14 +5,14 @@ import type { AgGridReact } from 'ag-grid-react';
 import * as Schema from '@vegaprotocol/types';
 import { useVegaTransactionStore } from '@vegaprotocol/wallet';
 import { t } from '@vegaprotocol/i18n';
-import type { useDataGridStore } from '@vegaprotocol/datagrid';
+import type { useDataGridEvents } from '@vegaprotocol/datagrid';
 import { useVegaWallet } from '@vegaprotocol/wallet';
 
 interface PositionsManagerProps {
   partyIds: string[];
   onMarketClick?: (marketId: string) => void;
   isReadOnly: boolean;
-  gridProps: ReturnType<typeof useDataGridStore>;
+  gridProps: ReturnType<typeof useDataGridEvents>;
 }
 
 export const PositionsManager = ({
