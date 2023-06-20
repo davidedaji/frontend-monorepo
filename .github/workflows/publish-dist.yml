@@ -31,6 +31,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Log in to the Container registry (ghcr)
+        if: ${{ github.event_name == 'pull_request' }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -39,7 +40,7 @@ jobs:
 
       - name: Log in to the Container registry (docker hub)
         uses: docker/login-action@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && ( endsWith(github.ref, 'main') || endsWith(github.ref, 'release/testnet') ) }}
         with:
           # registry: registry.hub.docker.com
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -74,9 +75,15 @@ jobs:
               envName="mainnet"
               bucketName="tools.vega.xyz"
             fi
+            if [[ "${{ matrix.app }}" = "static" ]]; then
+              envName="mainnet"
+              bucketName="static.vega.xyz"
+            fi
+            if [[ "${{ matrix.app }}" = "ui-toolkit" ]]; then
+              envName="mainnet"
+              bucketName="ui.vega.rocks"
+            fi
           elif [[ "${{ github.ref }}" =~ .*main$ ]]; then
-            envName="mainnet"
-          elif [[ "${{ matrix.app}}" = "trading" ]] && [[ "${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}" = "true" ]]; then
             envName="mainnet"
           fi
 
@@ -106,14 +113,15 @@ jobs:
         run: |
           flags=""
           if [[ ! -z "${{ env.ENV_NAME }}" ]]; then
-            if [[ "${{ env.ENV_NAME }}" != "ops-vega" ]]; then
-              flags="--env=${{ env.ENV_NAME }}"
-            fi
+            flags="--env=${{ env.ENV_NAME }}"
           fi
 
           if [ "${{ matrix.app }}" = "trading" ]; then
             yarn nx export trading $flags || (yarn install && yarn nx export trading $flags)
             DIST_LOCATION=dist/apps/trading/exported
+          elif [ "${{ matrix.app }}" = "ui-toolkit" ]; then
+            NODE_ENV=production yarn nx run ui-toolkit:build-storybook
+            DIST_LOCATION=dist/storybook/ui-toolkit
           else
             yarn nx build ${{ matrix.app }} $flags || (yarn install && yarn nx build ${{ matrix.app }} $flags)
             DIST_LOCATION=dist/apps/${{ matrix.app }}
@@ -148,7 +156,9 @@ jobs:
 
       - name: Publish dist as docker image (ghcr)
         uses: docker/build-push-action@v3
-        if: ${{ github.event_name == 'pull_request' || (matrix.app == 'trading' && github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/v') ) }}
+        continue-on-error: true
+        id: ghcr-push
+        if: ${{ github.event_name == 'pull_request' }}
         with:
           context: .
           file: docker/node-outside-docker.Dockerfile
@@ -161,7 +171,9 @@ jobs:
 
       - name: Publish dist as docker image (docker hub)
         uses: docker/build-push-action@v3
-        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        continue-on-error: true
+        id: dockerhub-push
+        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && endsWith(github.ref, 'main') }}
         with:
           context: .
           file: docker/node-outside-docker.Dockerfile
@@ -170,13 +182,41 @@ jobs:
             APP=${{ matrix.app }}
             ENV_NAME=${{ env.ENV_NAME }}
           tags: |
-            vegaprotocol/${{ matrix.app }}:${{ github.ref_name }}
-            vegaprotocol/${{ matrix.app }}:mainnet
+            vegaprotocol/${{ matrix.app }}:${{ github.sha }}
+            vegaprotocol/${{ matrix.app }}:${{ endsWith(github.ref, 'main') && 'mainnet' || endsWith(github.ref, 'release/testnet') && 'testnet' || '' }}
+
+      - name: Publish dist as docker image (ghcr - retry)
+        uses: docker/build-push-action@v3
+        if: ${{ steps.ghcr-push.outcome == 'failure' }}
+        with:
+          context: .
+          file: docker/node-outside-docker.Dockerfile
+          push: true
+          build-args: |
+            APP=${{ matrix.app }}
+            ENV_NAME=${{ env.ENV_NAME }}
+          tags: |
+            ghcr.io/vegaprotocol/frontend/${{ matrix.app }}:${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Publish dist as docker image (docker hub - retry)
+        uses: docker/build-push-action@v3
+        if: ${{ steps.dockerhub-push.outcome == 'failure' }}
+        with:
+          context: .
+          file: docker/node-outside-docker.Dockerfile
+          push: true
+          build-args: |
+            APP=${{ matrix.app }}
+            ENV_NAME=${{ env.ENV_NAME }}
+          tags: |
+            vegaprotocol/${{ matrix.app }}:${{ github.sha }}
+            vegaprotocol/${{ matrix.app }}:${{ endsWith(github.ref, 'main') && 'mainnet' || endsWith(github.ref, 'release/testnet') && 'testnet' || '' }}
 
       # bucket creation in github.com/vegaprotocol/terraform//frontend
       - name: Publish dist to s3
         uses: jakejarvis/s3-sync-action@master
-        if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/v') && ( matrix.app != 'trading' || (matrix.app == 'trading' && !endsWith(github.ref, 'main') ) ) }}
+        # s3 releases are not happening for trading on mainnet - it's IPFS
+        if: ${{ github.event_name == 'push' && ( matrix.app != 'trading' || (matrix.app == 'trading' && !( endsWith(github.ref, 'main') || endsWith(github.ref, 'release/testnet') ) ) ) }}
         with:
           args: --acl private --follow-symlinks --delete
         env:
@@ -194,22 +234,28 @@ jobs:
           number: ${{ github.event.number }}
 
       - name: Trigger fleek deployment
-        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        # release to ipfs happens only on mainnet (represented by main branch) for trading
+        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && ( endsWith(github.ref, 'main') || endsWith(github.ref, 'release/testnet') ) }}
         run: |
+          if echo ${{ github.ref }} | grep -q main; then
+            fleek_id='f8f2e051-f18e-49e6-b876-0a39369dc0d8'
+          elif echo ${{ github.ref }} | grep -q release/testnet; then
+            fleek_id='79baaeca-1952-4ae7-a256-f668cfc1d68e'
+          fi
           # display info about app
           curl -H "Authorization: ${{ secrets.FLEEK_API_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{"query": "query{getSiteById(siteId:\"f8f2e051-f18e-49e6-b876-0a39369dc0d8\"){id latestDeploy{id status}}}"}' \
+            -d '{"query": "query{getSiteById(siteId:\"$fleek_id\"){id latestDeploy{id status}}}"}' \
             https://api.fleek.co/graphql
 
           # trigger new deployment as base image is always set to vegaprotocol/trading:mainnet
           curl -H "Authorization: ${{ secrets.FLEEK_API_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{"query": "mutation{triggerDeploy(siteId:\"f8f2e051-f18e-49e6-b876-0a39369dc0d8\"){id status}}"}' \
+            -d '{"query": "mutation{triggerDeploy(siteId:\"$fleek_id\"){id status}}"}' \
             https://api.fleek.co/graphql
 
       - name: Check out ipfs-redirect
-        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && endsWith(github.ref, 'main') }}
         uses: actions/checkout@v3
         with:
           repository: 'vegaprotocol/ipfs-redirect'
@@ -218,7 +264,7 @@ jobs:
           token: ${{ secrets.VEGA_CI_BOT_GITHUB_TOKEN }}
 
       - name: Update console.vega.xyz DNS to redirect to the new console
-        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && endsWith(github.ref, 'main') }}
         env:
           GH_TOKEN: ${{ secrets.VEGA_CI_BOT_GITHUB_TOKEN }}
         run: |
@@ -255,26 +301,38 @@ jobs:
             gh pr merge "${pr_url}" --delete-branch --squash --admin
           )
 
-          # # Generate console URL
-          # new_console_url_type=ipfs
-          # # new_console_url_type=ipns
-          # new_console_url_domain=cf-ipfs.com
-          # # new_console_url_domain=dweb.link
-          # new_console_url="https://${new_cid}.${new_console_url_type}.${new_console_url_domain}/"
-          # echo "new_console_url=${new_console_url}"
+      - name: Update console.fairground.wtf DNS to redirect to the new console
+        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && endsWith(github.ref, 'testnet') }}
+        run: |
+          curl -L https://dist.ipfs.tech/kubo/v0.20.0/kubo_v0.20.0_linux-amd64.tar.gz -o kubo.tgz
+          tar -xzf kubo.tgz
+          export PATH="$PATH:$PWD/kubo"
+          which ipfs
+          new_hash=$(cat ${{ matrix.app }}-ipfs-hash)
+          new_cid=$(ipfs cid format -v 1 -b base32 $new_hash)
 
-          # # Update record in DNSimple
-          # # docs: https://developer.dnsimple.com/v2/zones/records/#updateZoneRecord
-          # dnsimple_account_id=84895
-          # dnsimple_zone_name=console.vega.xyz
-          # dnsimple_record_id=44409591
-          # # see: https://dnsimple.com/a/84895/domains/console.vega.xyz/records/44409591/edit
+          # Generate console URL
 
-          # curl  -H 'Authorization: Bearer ${{ secrets.DNSIMPLE_API_TOKEN }}' \
-          #       -H 'Accept: application/json' \
-          #       -H 'Content-Type: application/json' \
-          #       -X PATCH \
-          #       -d "{
-          #             \"content\": \"${new_console_url}\"
-          #       }" \
-          #       https://api.dnsimple.com/v2/${dnsimple_account_id}/zones/${dnsimple_zone_name}/records/${dnsimple_record_id}
+          new_console_url_type=ipfs
+          # new_console_url_type=ipns
+
+          new_console_url_domain=cf-ipfs.com
+          # new_console_url_domain=dweb.link
+
+          new_console_url="https://${new_cid}.${new_console_url_type}.${new_console_url_domain}/"
+          echo "new_console_url=${new_console_url}"
+
+          # Update record in DNSimple
+          # docs: https://developer.dnsimple.com/v2/zones/records/#updateZoneRecord
+          dnsimple_account_id=84895
+          dnsimple_zone_name=fairground.wtf
+          dnsimple_record_id=44571545
+          # see: https://dnsimple.com/a/84895/domains/fairground.wtf/records/44571545/edit
+          curl  -H 'Authorization: Bearer ${{ secrets.DNSIMPLE_API_TOKEN }}' \
+                -H 'Accept: application/json' \
+                -H 'Content-Type: application/json' \
+                -X PATCH \
+                -d "{
+                      \"content\": \"${new_console_url}\"
+                }" \
+                https://api.dnsimple.com/v2/${dnsimple_account_id}/zones/${dnsimple_zone_name}/records/${dnsimple_record_id}
