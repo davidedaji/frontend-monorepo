@@ -173,7 +173,7 @@ jobs:
         uses: docker/build-push-action@v3
         continue-on-error: true
         id: dockerhub-push
-        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && endsWith(github.ref, 'main') }}
+        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && ( endsWith(github.ref, 'main') || endsWith(github.ref, 'release/testnet') ) }}
         with:
           context: .
           file: docker/node-outside-docker.Dockerfile
@@ -239,17 +239,19 @@ jobs:
         run: |
           if echo ${{ github.ref }} | grep -q main; then
             fleek_id='f8f2e051-f18e-49e6-b876-0a39369dc0d8'
+            api_key="${{ secrets.FLEEK_API_KEY }}"
           elif echo ${{ github.ref }} | grep -q release/testnet; then
             fleek_id='79baaeca-1952-4ae7-a256-f668cfc1d68e'
+            api_key="${{ secrets.FLEEK_FAIRGROUND_API_KEY }}"
           fi
           # display info about app
-          curl -H "Authorization: ${{ secrets.FLEEK_API_KEY }}" \
+          curl --fail -H "Authorization: $api_key" \
             -H "Content-Type: application/json" \
             -d '{"query": "query{getSiteById(siteId:\"$fleek_id\"){id latestDeploy{id status}}}"}' \
             https://api.fleek.co/graphql
 
           # trigger new deployment as base image is always set to vegaprotocol/trading:mainnet
-          curl -H "Authorization: ${{ secrets.FLEEK_API_KEY }}" \
+          curl --fail -H "Authorization: $api_key" \
             -H "Content-Type: application/json" \
             -d '{"query": "mutation{triggerDeploy(siteId:\"$fleek_id\"){id status}}"}' \
             https://api.fleek.co/graphql
@@ -319,7 +321,7 @@ jobs:
           new_console_url_domain=cf-ipfs.com
           # new_console_url_domain=dweb.link
 
-          new_console_url="https://${new_cid}.${new_console_url_type}.${new_console_url_domain}/"
+          new_console_url="${new_cid}.${new_console_url_type}.${new_console_url_domain}"
           echo "new_console_url=${new_console_url}"
 
           # Update record in DNSimple
@@ -328,7 +330,7 @@ jobs:
           dnsimple_zone_name=fairground.wtf
           dnsimple_record_id=44571545
           # see: https://dnsimple.com/a/84895/domains/fairground.wtf/records/44571545/edit
-          curl  -H 'Authorization: Bearer ${{ secrets.DNSIMPLE_API_TOKEN }}' \
+          curl --fail -H 'Authorization: Bearer ${{ secrets.DNSIMPLE_API_TOKEN }}' \
                 -H 'Accept: application/json' \
                 -H 'Content-Type: application/json' \
                 -X PATCH \
