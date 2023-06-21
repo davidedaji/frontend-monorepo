@@ -296,7 +296,7 @@ jobs:
             git config --global user.name "vega-ci-bot"
 
             # checkout new branch
-            branch_name="update-hash-${{ github.ref }}"
+            branch_name="update-hash-${{ github.ref }}-$(date '+%Y-%-m-%d-%H-%M')"
             git checkout -b "$branch_name"
 
             # update CID files
@@ -316,7 +316,8 @@ jobs:
             git push -u origin "$branch_name"
 
             # create PR and merge it
-            pr_url="$(gh pr create --title "${commit_msg}" --body 'automated pull request to update CIDs')"
+            sleep 5
+            pr_url="$(gh pr create --head "$branch_name" --base "main" --title "${commit_msg}" --body 'automated pull request to update CIDs')"
             echo $pr_url
             # once auto merge get's enabled on documentation repo let's do follow up
             sleep 5
