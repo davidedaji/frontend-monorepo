@@ -265,7 +265,7 @@ jobs:
           fi
 
       - name: Check out ipfs-redirect
-        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && endsWith(github.ref, 'main') }}
+        if: ${{ matrix.app == 'trading' && github.event_name == 'push' && ( endsWith(github.ref, 'main') || endsWith(github.ref, 'testnet') ) }}
         uses: actions/checkout@v3
         with:
           repository: 'vegaprotocol/ipfs-redirect'
@@ -273,7 +273,7 @@ jobs:
           fetch-depth: '0'
           token: ${{ secrets.VEGA_CI_BOT_GITHUB_TOKEN }}
 
-      - name: Update console.vega.xyz DNS to redirect to the new console
+      - name: Update interstitial page to point to the new console
         if: ${{ matrix.app == 'trading' && github.event_name == 'push' && ( endsWith(github.ref, 'main') || endsWith(github.ref, 'testnet') ) }}
         env:
           GH_TOKEN: ${{ secrets.VEGA_CI_BOT_GITHUB_TOKEN }}
