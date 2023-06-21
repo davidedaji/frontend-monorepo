@@ -295,10 +295,6 @@ jobs:
             git config --global user.email "vega-ci-bot@vega.xyz"
             git config --global user.name "vega-ci-bot"
 
-            # checkout new branch
-            branch_name="update-hash-${{ github.ref }}-$(date '+%Y-%-m-%d-%H-%M')"
-            git checkout -b "$branch_name"
-
             # update CID files
             if echo ${{ github.ref }} | grep -q main; then
               echo $new_hash > cidv0-mainnet.txt
@@ -313,13 +309,5 @@ jobs:
             # create commit
             commit_msg="Automated hash update from ${{ github.ref }}"
             git commit -m "$commit_msg"
-            git push -u origin "$branch_name"
-
-            # create PR and merge it
-            sleep 5
-            pr_url="$(gh pr create --head "$branch_name" --base "main" --title "${commit_msg}" --body 'automated pull request to update CIDs')"
-            echo $pr_url
-            # once auto merge get's enabled on documentation repo let's do follow up
-            sleep 5
-            gh pr merge "${pr_url}" --delete-branch --squash --admin
+            git push -u origin "main"
           )
